@@ -13,10 +13,9 @@ def resize_image_and_mask(ori_image_dir, ori_mask_dir, saved_image_dir, saved_ma
     if not os.path.exists(saved_mask_dir):
         os.makedirs(saved_mask_dir)
 
-    ori_names = os.listdir(ori_image_dir)
+    ori_name_list = os.listdir(ori_image_dir)
 
-    for i in range(len(ori_names)):
-        ori_name = ori_names[i]
+    for ori_name in ori_name_list:
         ori_image_path = os.path.join(ori_image_dir, ori_name)
         ori_mask_path = os.path.join(ori_mask_dir, ori_name)
         saved_image_path = os.path.join(saved_image_dir, ori_name)
@@ -33,5 +32,3 @@ if __name__ == '__main__':
     resize_image_and_mask(config.ori_kvair_seg_image_dir, config.ori_kvair_seg_masks_dir,
                           config.kvair_seg_image_dir, config.kvair_seg_masks_dir,
                           config.width, config.height)
-
-
