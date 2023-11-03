@@ -27,6 +27,6 @@ class DefaultConfig:
     height = 640
 
     # network
-    epoch_num = 100
+    epoch_num = 20
     lr = 1e-3
-    batch_size = 16
+    batch_size = 2
