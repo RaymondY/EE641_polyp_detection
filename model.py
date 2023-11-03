@@ -54,9 +54,9 @@ class UnetBlock(nn.Module):
         return x
 
 
-class Unet(nn.Module):
+class BasicUnet(nn.Module):
     def __init__(self, in_channels=3, out_channels=1, init_features=32):
-        super(Unet, self).__init__()
+        super(BasicUnet, self).__init__()
         features = init_features
         self.encoder1 = UnetBlock(in_channels, features)
         self.encoder2 = UnetBlock(features, features * 2)
@@ -115,3 +115,9 @@ class Unet(nn.Module):
         output = self.sigmoid(output)
 
         return output
+
+
+# class MultiScaleUnet(Unet):
+#     def __init__(self, in_channels=3, out_channels=1, init_features=32):
+#         super(MultiScaleUnet, self).__init__(in_channels, out_channels, init_features)
+
