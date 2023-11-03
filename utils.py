@@ -95,9 +95,9 @@ def compute_mean_std():
     # tensor([0.5592, 0.3213, 0.2349]) tensor([0.3057, 0.2139, 0.1766])
 
 
-def denormalize(image):
-    mean = torch.tensor([0.5592, 0.3213, 0.2349]).view(3, 1, 1)
-    std = torch.tensor([0.3057, 0.2139, 0.1766]).view(3, 1, 1)
+def denormalize(image, device="cpu"):
+    mean = torch.tensor([0.5592, 0.3213, 0.2349]).view(3, 1, 1).to(device)
+    std = torch.tensor([0.3057, 0.2139, 0.1766]).view(3, 1, 1).to(device)
     return image * std + mean
 
 
