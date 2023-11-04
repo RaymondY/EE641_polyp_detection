@@ -1,3 +1,5 @@
+# Author: Tiankai Yang <raymondyangtk@gmail.com>
+
 from utils import load_data
 from model import BasicUnet
 from train import train_basic_unet
@@ -19,5 +21,7 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    import torch
+    print(torch.cuda.is_available())
+    # main()
 
