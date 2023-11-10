@@ -1,3 +1,5 @@
+# Author: Tiankai Yang <raymondyangtk@gmail.com>
+
 import torch
 import torch.nn as nn
 import matplotlib.pyplot as plt
