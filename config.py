@@ -23,8 +23,8 @@ class DefaultConfig:
     model_path = 'model_{}.pth'.format(datetime.now().strftime('%Y%m%d_%H%M%S'))
 
     # data
-    width = 640
-    height = 640
+    width = 256
+    height = 256
 
     # network
     epoch_num = 20

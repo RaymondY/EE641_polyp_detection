@@ -1,7 +1,7 @@
 # general igone
 .DS_Store
 .idea/
-
+visualize.py
 # temporary ignore /data
 datasets/*
 
