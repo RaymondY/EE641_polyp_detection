@@ -20,13 +20,16 @@ class DefaultConfig:
 
     # model dir
     model_dir = os.path.join(current_dir, 'saved_models')
-    model_path = 'model_{}.pth'.format(datetime.now().strftime('%Y%m%d_%H%M%S'))
+    model_path = model_dir + 'model_{}.pth'.format(datetime.now().strftime('%Y%m%d_%H%M%S'))
 
     # data
     width = 256
     height = 256
 
     # network
-    epoch_num = 20
-    lr = 1e-3
-    batch_size = 2
+    epoch_num = 30
+    lr = 2e-4
+    batch_size = 16
+
+    # loss ratio
+    loss_ratio = 0.3

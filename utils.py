@@ -1,9 +1,7 @@
 # Author: Tiankai Yang <raymondyangtk@gmail.com>
 
 import os
-import random
 from PIL import Image
-import matplotlib.pyplot as plt
 import torch
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
@@ -55,7 +53,40 @@ class KvasirDataset(Dataset):
         return len(self.image_path_list)
 
 
-def load_data(is_train=True):
+class MultiScaleKvasirDataset(KvasirDataset):
+    def __init__(self, image_dir, mask_dir,
+                 image_transform=None, mask_transform=None,
+                 is_train=True):
+        super(MultiScaleKvasirDataset, self).__init__(image_dir, mask_dir,
+                                                      image_transform, mask_transform,
+                                                      is_train)
+
+    def __getitem__(self, index):
+        image_path = self.image_path_list[index]
+        mask_path = self.mask_path_list[index]
+        image = Image.open(image_path).convert('RGB')
+        mask1 = Image.open(mask_path).convert('L')
+        mask2, mask3, mask4 = None, None, None
+        if self.is_train:
+            # use Lanczos to resize mask
+            mask2 = mask1.resize((config.width // 2, config.height // 2), resample=Image.LANCZOS)
+            mask3 = mask1.resize((config.width // 4, config.height // 4), resample=Image.LANCZOS)
+            mask4 = mask1.resize((config.width // 8, config.height // 8), resample=Image.LANCZOS)
+        if self.image_transform:
+            image = self.image_transform(image)
+        if self.mask_transform:
+            mask1 = self.mask_transform(mask1)
+            if self.is_train:
+                mask2 = self.mask_transform(mask2)
+                mask3 = self.mask_transform(mask3)
+                mask4 = self.mask_transform(mask4)
+        if self.is_train:
+            return image, mask1, mask2, mask3, mask4
+        else:
+            return image, mask1
+
+
+def load_data(is_train=True, dataset_class=KvasirDataset):
     image_transform = transforms.Compose([
         transforms.ToTensor(),
         transforms.Normalize([0.5592, 0.3213, 0.2349],
@@ -64,7 +95,7 @@ def load_data(is_train=True):
     mask_transform = transforms.Compose([
         transforms.ToTensor(),
     ])
-    dataset = KvasirDataset(config.kvair_seg_image_dir, config.kvair_seg_masks_dir,
+    dataset = dataset_class(config.kvair_seg_image_dir, config.kvair_seg_masks_dir,
                             image_transform=image_transform, mask_transform=mask_transform,
                             is_train=is_train)
     if is_train:
@@ -103,13 +134,3 @@ def denormalize(image, device="cpu"):
 
 if __name__ == '__main__':
     compute_mean_std()
-    # train_data_loader = load_data(is_train=True)
-    # for image, mask in train_data_loader:
-    #     print(image.shape, mask.shape)
-    #     plt.imshow(image[0].permute(1, 2, 0))
-    #     plt.show()
-    #     plt.imshow(denormalize(image[0]).permute(1, 2, 0))
-    #     plt.show()
-    #     plt.imshow(mask[0].squeeze(), cmap='gray')
-    #     plt.show()
-    #     break

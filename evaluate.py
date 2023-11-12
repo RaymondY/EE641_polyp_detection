@@ -13,6 +13,7 @@ config = DefaultConfig()
 def evaluate(model, test_loader):
     device = config.device
     criterion = DiceLoss()
+    # criterion = torch.nn.BCEWithLogitsLoss()
     # criterion.to(device)
     if next(model.parameters()).device != device:
         model.to(device)

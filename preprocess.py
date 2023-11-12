@@ -22,8 +22,10 @@ def resize_image_and_mask(ori_image_dir, ori_mask_dir, saved_image_dir, saved_ma
         saved_mask_path = os.path.join(saved_mask_dir, ori_name)
         ori_image = cv2.imread(ori_image_path)
         ori_mask = cv2.imread(ori_mask_path, cv2.IMREAD_GRAYSCALE)
-        resized_image = cv2.resize(ori_image, (width, height))
-        resized_mask = cv2.resize(ori_mask, (width, height))
+        resized_image = cv2.resize(ori_image, (width, height),
+                                   interpolation=cv2.INTER_LANCZOS4)
+        resized_mask = cv2.resize(ori_mask, (width, height),
+                                  interpolation=cv2.INTER_LANCZOS4)
         cv2.imwrite(saved_image_path, resized_image)
         cv2.imwrite(saved_mask_path, resized_mask)
 
