@@ -20,7 +20,8 @@ class DefaultConfig:
 
     # model dir
     model_dir = os.path.join(current_dir, 'saved_models')
-    model_path = model_dir + 'model_{}.pth'.format(datetime.now().strftime('%Y%m%d_%H%M%S'))
+    model_name = datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + '.pth'
+    model_path = os.path.join(model_dir, model_name)
 
     # data
     width = 256
@@ -28,8 +29,11 @@ class DefaultConfig:
 
     # network
     epoch_num = 30
-    lr = 2e-4
+    warmup_epoch_num = 3
+    lr = 3e-4
+    warmup_lr = 1e-6
     batch_size = 16
+    weight_decay = 0.
 
     # loss ratio
     loss_ratio = 0.3

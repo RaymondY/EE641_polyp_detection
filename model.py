@@ -197,11 +197,12 @@ class MultiScaleUnet(BasicUnet):
         pred1 = self.conv1(dec1)
         return pred1, pred2, pred3, pred4
 
-    def forward(self, x):
+    def forward(self, x, need_all_levels=False):
         # Encoder
         enc1, enc2, enc3, enc4 = self.forward_encoder(x)
         # Decoder
+        if need_all_levels:
+            pred1, pred2, pred3, pred4 = self.forward_level_1(enc1, enc2, enc3, enc4)
+            return pred1, pred2, pred3, pred4
         pred1 = self.forward_level_1(enc1, enc2, enc3, enc4)[0]
         return pred1
-
-

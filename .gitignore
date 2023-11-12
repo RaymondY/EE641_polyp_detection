@@ -2,8 +2,9 @@
 .DS_Store
 .idea/
 visualize.py
-# temporary ignore /data
+
 datasets/*
+saved_models/*
 
 !.gitkeep
 
