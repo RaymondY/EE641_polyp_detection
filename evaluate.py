@@ -3,7 +3,7 @@
 import torch
 import torch.nn as nn
 import matplotlib.pyplot as plt
-from loss import DiceLoss
+from loss import DiceLoss, IOULoss
 from utils import denormalize
 from config import DefaultConfig
 
@@ -12,26 +12,31 @@ config = DefaultConfig()
 
 def evaluate(model, test_loader):
     device = config.device
-    criterion = DiceLoss()
+    criterion1 = DiceLoss()
+    criterion2 = IOULoss()
     # criterion = torch.nn.BCELoss()
     # criterion.to(device)
     if next(model.parameters()).device != device:
         model.to(device)
     model.eval()
-    epoch_loss = 0.0
-    iou_sum = 0.0
+    dice_loss = 0.0
+    iou_loss = 0.0
     dice_sum = 0.0
+    iou_sum = 0.0
     with torch.no_grad():
         for image, mask in test_loader:
             image = image.to(device)
             mask = mask.to(device)
             pred = model(image)
-            loss = criterion(pred, mask)
-            epoch_loss += loss.item()
+            loss1 = criterion1(pred, mask)
+            loss2 = criterion2(pred, mask)
+            dice_loss += loss1.item()
+            iou_loss += loss2.item()
             pred = (pred > config.threshold).float()
-            iou_sum += compute_iou(pred, mask)
             dice_sum += compute_dice(pred, mask)
-    print(f"Test loss: {epoch_loss / len(test_loader)}")
+            iou_sum += compute_iou(pred, mask)
+    print(f"Test Dice Loss: {dice_loss / len(test_loader)}")
+    print(f"Test IoU Loss: {iou_loss / len(test_loader)}")
     print(f"Test mDice: {dice_sum / len(test_loader)}")
     print(f"Test mIoU: {iou_sum / len(test_loader)}")
 

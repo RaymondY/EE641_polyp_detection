@@ -28,7 +28,7 @@ class DefaultConfig:
     height = 256
 
     # network
-    init_features = 8
+    init_features = 16
 
     # train
     epoch_num = 30

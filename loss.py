@@ -17,3 +17,15 @@ class DiceLoss(nn.Module):
         union = pred.sum(axis=(1, 2, 3)) + target.sum(axis=(1, 2, 3))
         dice = (2 * intersection + self.smooth) / (union + self.smooth)
         return 1 - dice.mean(axis=0)
+
+
+class IOULoss(nn.Module):
+    def __init__(self, smooth=1.0):
+        super(IOULoss, self).__init__()
+        self.smooth = smooth
+
+    def forward(self, pred, target):
+        intersection = (pred * target).sum(axis=(1, 2, 3))
+        union = pred.sum(axis=(1, 2, 3)) + target.sum(axis=(1, 2, 3)) - intersection
+        iou = (intersection + self.smooth) / (union + self.smooth)
+        return 1 - iou.mean(axis=0)
