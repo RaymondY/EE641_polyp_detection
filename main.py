@@ -1,7 +1,8 @@
 # Author: Tiankai Yang <raymondyangtk@gmail.com>
 
 from utils import load_data, KvasirDataset, MultiScaleKvasirDataset
-from model import BasicUnet, MultiScaleUnet
+from model import (BasicUnet, MultiScaleUnet, MultiScalePixelShuffleUnet,
+                   BasicBlock, ResBlock)
 from train import train_basic_unet, train_multi_scale_unet
 from config import DefaultConfig
 
@@ -11,10 +12,13 @@ model_class_set = {"Basic Unet": [KvasirDataset,
                                   train_basic_unet],
                    "Multi-Scale Unet": [MultiScaleKvasirDataset,
                                         MultiScaleUnet,
-                                        train_multi_scale_unet]}
+                                        train_multi_scale_unet],
+                   "Multi-Scale PixelShuffle Unet": [MultiScaleKvasirDataset,
+                                                     MultiScalePixelShuffleUnet,
+                                                     train_multi_scale_unet]}
 
 
-def run(model_name="Basic Unet"):
+def run(model_name, block_class):
     dataset_class, model_class, train_func = model_class_set[model_name]
     print(f"Model: {model_name}")
     print(f"Dataset: {dataset_class.__name__}")
@@ -22,13 +26,16 @@ def run(model_name="Basic Unet"):
     print(f"Train function: {train_func.__name__}")
     train_loader = load_data(is_train=True, dataset_class=dataset_class)
     test_loader = load_data(is_train=False, dataset_class=dataset_class)
-    model = model_class()
+    model = model_class(block_class)
     train_func(model, train_loader, test_loader)
 
 
 def main():
-    # run(model_name="Basic Unet")
-    run(model_name="Multi-Scale Unet")
+    run(model_name="Basic Unet", block_class=BasicBlock)
+    run(model_name="Multi-Scale Unet", block_class=BasicBlock)
+    run(model_name="Multi-Scale Unet", block_class=ResBlock)
+    run(model_name="Multi-Scale PixelShuffle Unet", block_class=BasicBlock)
+    run(model_name="Multi-Scale PixelShuffle Unet", block_class=ResBlock)
 
 
 if __name__ == '__main__':

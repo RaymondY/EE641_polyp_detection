@@ -28,12 +28,18 @@ class DefaultConfig:
     height = 256
 
     # network
+    init_features = 8
+
+    # train
     epoch_num = 30
     warmup_epoch_num = 3
-    lr = 3e-4
+    lr = 2e-4
     warmup_lr = 1e-6
-    batch_size = 16
-    weight_decay = 0.
+    batch_size = 4
+    weight_decay = 0
 
-    # loss ratio
-    loss_ratio = 0.3
+    # # loss ratio
+    # loss_ratio = 0.3
+
+    threshold = 0.5
+    smooth_factor = 1e-6

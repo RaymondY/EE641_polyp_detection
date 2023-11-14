@@ -15,12 +15,10 @@ config = DefaultConfig()
 def train_basic_unet(model, train_loader, test_loader=None):
     device = config.device
     optimizer = optim.Adam(model.parameters(), lr=config.lr, weight_decay=config.weight_decay)
-    # optimizer = optim.RMSprop(model.parameters(), lr=config.lr, weight_decay=1e-8,
-    #                           momentum=0.9, foreach=True)
-    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
+    scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=[20, 25, 28], gamma=0.1)
     warmup_optimizer = optim.Adam(model.parameters(), lr=config.warmup_lr)
     criterion = DiceLoss()
-    # criterion = torch.nn.BCEWithLogitsLoss()
+    # criterion = torch.nn.BCELoss()
     # criterion.to(device)
     if next(model.parameters()).device != device:
         model.to(device)
@@ -69,20 +67,14 @@ def _train_basic_unet_helper(image, mask, optimizer, model, criterion, device):
 
 def train_multi_scale_unet(model, train_loader, test_loader=None):
     device = config.device
-    optimizer4 = optim.Adam(model.parameters(), lr=config.lr, weight_decay=config.weight_decay)
-    optimizer3 = optim.Adam(model.parameters(), lr=config.lr, weight_decay=config.weight_decay)
-    optimizer2 = optim.Adam(model.parameters(), lr=config.lr, weight_decay=config.weight_decay)
-    optimizer1 = optim.Adam(model.parameters(), lr=config.lr, weight_decay=config.weight_decay)
-    scheduler4 = optim.lr_scheduler.StepLR(optimizer4, step_size=8, gamma=0.2)
-    scheduler3 = optim.lr_scheduler.StepLR(optimizer3, step_size=8, gamma=0.2)
-    scheduler2 = optim.lr_scheduler.StepLR(optimizer2, step_size=8, gamma=0.2)
-    scheduler1 = optim.lr_scheduler.StepLR(optimizer1, step_size=8, gamma=0.2)
-    warmup_optimizer4 = optim.Adam(model.parameters(), lr=config.warmup_lr)
-    warmup_optimizer3 = optim.Adam(model.parameters(), lr=config.warmup_lr)
-    warmup_optimizer2 = optim.Adam(model.parameters(), lr=config.warmup_lr)
-    warmup_optimizer1 = optim.Adam(model.parameters(), lr=config.warmup_lr)
+    coarse_optimizer = optim.Adam(model.parameters(), lr=config.lr, weight_decay=config.weight_decay)
+    fine_optimizer = optim.Adam(model.parameters(), lr=config.lr, weight_decay=config.weight_decay)
+    coarse_scheduler = optim.lr_scheduler.MultiStepLR(coarse_optimizer, milestones=[20, 25, 28], gamma=0.1)
+    fine_scheduler = optim.lr_scheduler.MultiStepLR(fine_optimizer, milestones=[20, 25, 28], gamma=0.1)
+    warmup_coarse_optimizer = optim.Adam(model.parameters(), lr=config.warmup_lr)
+    warmup_fine_optimizer = optim.Adam(model.parameters(), lr=config.warmup_lr)
     criterion = DiceLoss()
-    # criterion = torch.nn.BCEWithLogitsLoss()
+    # criterion = torch.nn.BCELoss()
     # criterion.to(device)
     if next(model.parameters()).device != device:
         model.to(device)
@@ -93,41 +85,30 @@ def train_multi_scale_unet(model, train_loader, test_loader=None):
     for epoch in range(config.warmup_epoch_num):
         with tqdm(train_loader, desc=f"Epoch {epoch + 1}", unit="batch") as tepoch:
             for image, mask1, mask2, mask3, mask4 in tepoch:
-                loss4, loss3, loss2, loss1 = \
+                temp_coarse_loss, temp_fine_loss = \
                     _train_multi_scale_unet_helper(image, mask1, mask2, mask3, mask4,
-                                                   warmup_optimizer4, warmup_optimizer3,
-                                                   warmup_optimizer2, warmup_optimizer1,
+                                                   warmup_coarse_optimizer,
+                                                   warmup_fine_optimizer,
                                                    model, criterion, device)
-                tepoch.set_postfix(loss4=loss4, loss3=loss3, loss2=loss2, loss1=loss1)
+                tepoch.set_postfix(loss4=temp_coarse_loss, loss1=temp_fine_loss)
     print("Warm up training finished.")
 
     # normal training
     for epoch in range(config.epoch_num):
-        epoch_loss4, epoch_loss3, epoch_loss2, epoch_loss1 = 0.0, 0.0, 0.0, 0.0
+        epoch_coarse_loss = 0.0
+        epoch_fine_loss = 0.0
         with tqdm(train_loader, desc=f"Epoch {epoch + 1}", unit="batch") as tepoch:
             for image, mask1, mask2, mask3, mask4 in tepoch:
-                # loss1 = _train_multi_scale_unet_helper(image, mask1, mask2, mask3, mask4,
-                #                                        optimizer4, optimizer3, optimizer2, optimizer1,
-                #                                        model, criterion, device)
-                # epoch_loss1 += loss1
-                # tepoch.set_postfix(loss1=loss1)
-                loss4, loss3, loss2, loss1 = \
-                    _train_multi_scale_unet_helper(image, mask1, mask2, mask3, mask4,
-                                                   optimizer4, optimizer3, optimizer2, optimizer1,
-                                                   model, criterion, device)
-                epoch_loss4 += loss4
-                epoch_loss3 += loss3
-                epoch_loss2 += loss2
-                epoch_loss1 += loss1
-                tepoch.set_postfix(loss4=loss4, loss3=loss3, loss2=loss2, loss1=loss1)
-        scheduler4.step()
-        scheduler3.step()
-        scheduler2.step()
-        scheduler1.step()
-        print(f"Epoch {epoch + 1} training loss4: {epoch_loss4 / len(train_loader)}")
-        print(f"Epoch {epoch + 1} training loss3: {epoch_loss3 / len(train_loader)}")
-        print(f"Epoch {epoch + 1} training loss2: {epoch_loss2 / len(train_loader)}")
-        print(f"Epoch {epoch + 1} training loss1: {epoch_loss1 / len(train_loader)}")
+                coarse_loss, fine_loss = _train_multi_scale_unet_helper(image, mask1, mask2, mask3, mask4,
+                                                                        coarse_optimizer, fine_optimizer,
+                                                                        model, criterion, device)
+                epoch_coarse_loss += coarse_loss
+                epoch_fine_loss += fine_loss
+                tepoch.set_postfix(loss4=coarse_loss, loss1=fine_loss, lr=fine_optimizer.param_groups[0]['lr'])
+        coarse_scheduler.step()
+        fine_scheduler.step()
+        print(f"Epoch {epoch + 1} training coarse loss: {epoch_coarse_loss / len(train_loader)}")
+        print(f"Epoch {epoch + 1} training fine loss: {epoch_fine_loss / len(train_loader)}")
         if test_loader:
             evaluate(model, test_loader)
             if epoch == 0 or (epoch + 1) % 5 == 0:
@@ -139,7 +120,7 @@ def train_multi_scale_unet(model, train_loader, test_loader=None):
 
 
 def _train_multi_scale_unet_helper(image, mask1, mask2, mask3, mask4,
-                                   optimizer4, optimizer3, optimizer2, optimizer1,
+                                   coarse_optimizer, fine_optimizer,
                                    model, criterion, device):
     image = image.to(device)
     mask1 = mask1.to(device)
@@ -147,52 +128,28 @@ def _train_multi_scale_unet_helper(image, mask1, mask2, mask3, mask4,
     mask3 = mask3.to(device)
     mask4 = mask4.to(device)
 
-    # optimizer1.zero_grad()
-    # pred1, pred2, pred3, pred4 = model(image, need_all_levels=True)
-    # loss = criterion(pred1, mask1) + \
-    #     config.loss_ratio * criterion(pred2, mask2) + \
-    #     config.loss_ratio * criterion(pred3, mask3) + \
-    #     config.loss_ratio * criterion(pred4, mask4)
-    # loss.backward()
-    # optimizer1.step()
-    # return loss.item()
-
     # level 4
-    optimizer4.zero_grad()
+    coarse_optimizer.zero_grad()
     enc4 = model.forward_encoder(image, need_level=4)
     dec4, pred4 = model.forward_level_4(enc4)
-    loss4 = criterion(pred4, mask4)
-    loss4.backward()
-    optimizer4.step()
-
-    # level 3
-    optimizer3.zero_grad()
-    enc3, enc4 = model.forward_encoder(image, need_level=3)
-    dec3, pred3, pred4 = model.forward_level_3(enc3, enc4)
-    loss3 = criterion(pred3, mask3) + \
-        config.loss_ratio * criterion(pred4, mask4)
-    loss3.backward()
-    optimizer3.step()
-
-    # level 2
-    optimizer2.zero_grad()
-    enc2, enc3, enc4 = model.forward_encoder(image, need_level=2)
-    dec2, pred2, pred3, pred4 = model.forward_level_2(enc2, enc3, enc4)
-    loss2 = criterion(pred2, mask2) + \
-        config.loss_ratio / 2 * criterion(pred3, mask3) + \
-        config.loss_ratio / 2 * criterion(pred4, mask4)
-    loss2.backward()
-    optimizer2.step()
+    coarse_loss = criterion(pred4, mask4)
+    coarse_loss.backward()
+    coarse_optimizer.step()
 
     # level 1
-    optimizer1.zero_grad()
+    fine_optimizer.zero_grad()
     enc1, enc2, enc3, enc4 = model.forward_encoder(image, need_level=1)
     pred1, pred2, pred3, pred4 = model.forward_level_1(enc1, enc2, enc3, enc4)
-    loss1 = criterion(pred1, mask1) + \
-        config.loss_ratio / 3 * criterion(pred2, mask2) + \
-        config.loss_ratio / 3 * criterion(pred3, mask3) + \
-        config.loss_ratio / 3 * criterion(pred4, mask4)
-    loss1.backward()
-    optimizer1.step()
+    # fine_loss = ((1 - config.loss_ratio) * criterion(pred1, mask1) +
+    #              config.loss_ratio / 3 * criterion(pred2, mask2) +
+    #              config.loss_ratio / 3 * criterion(pred3, mask3) +
+    #              config.loss_ratio / 3 * criterion(pred4, mask4))
+    fine_loss = (criterion(pred1, mask1) +
+                 criterion(pred2, mask2) +
+                 criterion(pred3, mask3) +
+                 criterion(pred4, mask4))
+    fine_loss.backward()
+    fine_optimizer.step()
 
-    return loss4.item(), loss3.item(), loss2.item(), loss1.item()
+    return coarse_loss.item(), fine_loss.item()
+    # return 0, fine_loss.item()
