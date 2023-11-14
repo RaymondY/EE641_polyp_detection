@@ -5,7 +5,7 @@ from datetime import datetime
 import torch
 import torch.optim as optim
 from tqdm import tqdm
-from loss import DiceLoss, IOULoss
+from loss import DiceLoss
 from evaluate import evaluate, show_predicted_mask_example, show_multi_scale_predicted_mask_example
 from config import DefaultConfig
 
@@ -72,8 +72,7 @@ def train_multi_scale_unet(model, train_loader, test_loader=None):
     fine_scheduler = optim.lr_scheduler.MultiStepLR(fine_optimizer, milestones=[20, 25, 28], gamma=0.1)
     warmup_coarse_optimizer = optim.Adam(model.parameters(), lr=config.warmup_lr)
     warmup_fine_optimizer = optim.Adam(model.parameters(), lr=config.warmup_lr)
-    criterion1 = DiceLoss()
-    criterion2 = IOULoss()
+    criterion = DiceLoss()
     # criterion = torch.nn.BCELoss()
     # criterion.to(device)
     if next(model.parameters()).device != device:
@@ -89,7 +88,7 @@ def train_multi_scale_unet(model, train_loader, test_loader=None):
                     _train_multi_scale_unet_helper(image, mask1, mask2, mask3, mask4,
                                                    warmup_coarse_optimizer,
                                                    warmup_fine_optimizer,
-                                                   model, criterion1, criterion2, device)
+                                                   model, criterion, device)
                 tepoch.set_postfix(loss4=temp_coarse_loss, loss1=temp_fine_loss)
     print("Warm up training finished.")
 
@@ -101,7 +100,7 @@ def train_multi_scale_unet(model, train_loader, test_loader=None):
             for image, mask1, mask2, mask3, mask4 in tepoch:
                 coarse_loss, fine_loss = _train_multi_scale_unet_helper(image, mask1, mask2, mask3, mask4,
                                                                         coarse_optimizer, fine_optimizer,
-                                                                        model, criterion1, criterion2, device)
+                                                                        model, criterion, device)
                 epoch_coarse_loss += coarse_loss
                 epoch_fine_loss += fine_loss
                 tepoch.set_postfix(loss4=coarse_loss, loss1=fine_loss, lr=fine_optimizer.param_groups[0]['lr'])
@@ -121,7 +120,7 @@ def train_multi_scale_unet(model, train_loader, test_loader=None):
 
 def _train_multi_scale_unet_helper(image, mask1, mask2, mask3, mask4,
                                    coarse_optimizer, fine_optimizer,
-                                   model, criterion1, criterion2, device):
+                                   model, criterion, device):
     image = image.to(device)
     mask1 = mask1.to(device)
     mask2 = mask2.to(device)
@@ -132,7 +131,7 @@ def _train_multi_scale_unet_helper(image, mask1, mask2, mask3, mask4,
     coarse_optimizer.zero_grad()
     enc4 = model.forward_encoder(image, need_level=4)
     dec4, pred4 = model.forward_level_4(enc4)
-    coarse_loss = 0.5 * criterion1(pred4, mask4) + 0.5 * criterion2(pred4, mask4)
+    coarse_loss = criterion(pred4, mask4)
     coarse_loss.backward()
     coarse_optimizer.step()
 
@@ -140,10 +139,10 @@ def _train_multi_scale_unet_helper(image, mask1, mask2, mask3, mask4,
     fine_optimizer.zero_grad()
     enc1, enc2, enc3, enc4 = model.forward_encoder(image, need_level=1)
     pred1, pred2, pred3, pred4 = model.forward_level_1(enc1, enc2, enc3, enc4)
-    fine_loss = (0.5 * criterion1(pred1, mask1) + 0.5 * criterion2(pred1, mask1) +
-                 0.5 * criterion1(pred2, mask2) + 0.5 * criterion2(pred2, mask2) +
-                 0.5 * criterion1(pred3, mask3) + 0.5 * criterion2(pred3, mask3) +
-                 0.5 * criterion1(pred4, mask4) + 0.5 * criterion2(pred4, mask4))
+    fine_loss = (criterion(pred1, mask1) +
+                 criterion(pred2, mask2) +
+                 criterion(pred3, mask3) +
+                 criterion(pred4, mask4))
     fine_loss.backward()
     fine_optimizer.step()
 

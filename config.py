@@ -12,8 +12,8 @@ class DefaultConfig:
 
     # datasets dir
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    ori_kvair_seg_image_dir = os.path.join(current_dir, 'datasets', 'kvasir', 'Kvasir-SEG', 'images')
-    ori_kvair_seg_masks_dir = os.path.join(current_dir, 'datasets', 'kvasir', 'Kvasir-SEG', 'masks')
+    ori_kvair_seg_image_dir = os.path.join(current_dir, 'datasets', 'Kvasir-SEG', 'images')
+    ori_kvair_seg_masks_dir = os.path.join(current_dir, 'datasets', 'Kvasir-SEG', 'masks')
     kvair_seg_image_dir = os.path.join(current_dir, 'datasets', 'normalized_kvasir_seg', 'images')
     kvair_seg_masks_dir = os.path.join(current_dir, 'datasets', 'normalized_kvasir_seg', 'masks')
     train_ratio = 0.7

@@ -32,10 +32,10 @@ def run(model_name, block_class):
 
 def main():
     run(model_name="Basic Unet", block_class=BasicBlock)
-    # run(model_name="Multi-Scale Unet", block_class=BasicBlock)
-    # run(model_name="Multi-Scale Unet", block_class=ResBlock)
-    # run(model_name="Multi-Scale PixelShuffle Unet", block_class=BasicBlock)
-    # run(model_name="Multi-Scale PixelShuffle Unet", block_class=ResBlock)
+    run(model_name="Multi-Scale Unet", block_class=BasicBlock)
+    run(model_name="Multi-Scale Unet", block_class=ResBlock)
+    run(model_name="Multi-Scale PixelShuffle Unet", block_class=BasicBlock)
+    run(model_name="Multi-Scale PixelShuffle Unet", block_class=ResBlock)
 
 
 if __name__ == '__main__':

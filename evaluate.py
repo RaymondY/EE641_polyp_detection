@@ -3,7 +3,7 @@
 import torch
 import torch.nn as nn
 import matplotlib.pyplot as plt
-from loss import DiceLoss, IOULoss
+from loss import DiceLoss
 from utils import denormalize
 from config import DefaultConfig
 
@@ -12,8 +12,7 @@ config = DefaultConfig()
 
 def evaluate(model, test_loader):
     device = config.device
-    criterion1 = DiceLoss()
-    criterion2 = IOULoss()
+    criterion = DiceLoss()
     # criterion = torch.nn.BCELoss()
     # criterion.to(device)
     if next(model.parameters()).device != device:
@@ -22,23 +21,18 @@ def evaluate(model, test_loader):
     dice_loss = 0.0
     iou_loss = 0.0
     dice_sum = 0.0
-    iou_sum = 0.0
     with torch.no_grad():
         for image, mask in test_loader:
             image = image.to(device)
             mask = mask.to(device)
             pred = model(image)
-            loss1 = criterion1(pred, mask)
-            loss2 = criterion2(pred, mask)
-            dice_loss += loss1.item()
-            iou_loss += loss2.item()
+            loss = criterion(pred, mask)
+            dice_loss += loss.item()
             pred = (pred > config.threshold).float()
             dice_sum += compute_dice(pred, mask)
-            iou_sum += compute_iou(pred, mask)
     print(f"Test Dice Loss: {dice_loss / len(test_loader)}")
     print(f"Test IoU Loss: {iou_loss / len(test_loader)}")
     print(f"Test mDice: {dice_sum / len(test_loader)}")
-    print(f"Test mIoU: {iou_sum / len(test_loader)}")
 
 
 def compute_iou(pred, mask):
