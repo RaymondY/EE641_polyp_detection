@@ -19,7 +19,7 @@ def evaluate(model, test_loader):
         model.to(device)
     model.eval()
     dice_loss = 0.0
-    iou_loss = 0.0
+    # iou_loss = 0.0
     dice_sum = 0.0
     with torch.no_grad():
         for image, mask in test_loader:
@@ -31,7 +31,7 @@ def evaluate(model, test_loader):
             pred = (pred > config.threshold).float()
             dice_sum += compute_dice(pred, mask)
     print(f"Test Dice Loss: {dice_loss / len(test_loader)}")
-    print(f"Test IoU Loss: {iou_loss / len(test_loader)}")
+    # print(f"Test IoU Loss: {iou_loss / len(test_loader)}")
     print(f"Test mDice: {dice_sum / len(test_loader)}")
 
 

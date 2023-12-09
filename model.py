@@ -12,7 +12,10 @@ class ConvBlock(nn.Module):
                  kernel_size=3, stride=1, padding=1,
                  has_act=True, activation='relu', has_bn=True, dropout=0.0):
         super(ConvBlock, self).__init__()
-        self.conv = nn.Conv2d(in_channels, out_channels, kernel_size=kernel_size, stride=stride, padding=padding)
+        self.conv = nn.Conv2d(in_channels, out_channels,
+                              kernel_size=kernel_size,
+                              stride=stride,
+                              padding=padding)
         self.has_act = has_act
         self.activation = None
         if has_act:
@@ -90,7 +93,9 @@ class ResBlock(nn.Module):
 
 
 class BasicUnet(nn.Module):
-    def __init__(self, unet_block_module=BasicBlock, in_channels=3, out_channels=1, init_features=config.init_features):
+    def __init__(self, unet_block_module=BasicBlock,
+                 in_channels=3, out_channels=1,
+                 init_features=config.init_features):
         super(BasicUnet, self).__init__()
         features = init_features
         self.encoder1 = unet_block_module(in_channels, features)
@@ -154,8 +159,12 @@ class BasicUnet(nn.Module):
 
 
 class MultiScaleUnet(BasicUnet):
-    def __init__(self, unet_block_module=BasicBlock, in_channels=3, out_channels=1, init_features=config.init_features):
-        super(MultiScaleUnet, self).__init__(unet_block_module, in_channels, out_channels, init_features)
+    def __init__(self, unet_block_module=BasicBlock,
+                 in_channels=3, out_channels=1,
+                 init_features=config.init_features):
+        super(MultiScaleUnet, self).__init__(unet_block_module,
+                                             in_channels, out_channels,
+                                             init_features)
         features = init_features
         self.encoder1 = unet_block_module(in_channels, features)
         self.encoder2 = unet_block_module(features, features * 2)
@@ -271,15 +280,20 @@ class MultiScaleUnet(BasicUnet):
         enc1, enc2, enc3, enc4 = self.forward_encoder(x)
         # Decoder
         if need_all_levels:
-            pred1, pred2, pred3, pred4 = self.forward_level_1(enc1, enc2, enc3, enc4)
+            pred1, pred2, pred3, pred4 = self.forward_level_1(enc1, enc2,
+                                                              enc3, enc4)
             return pred1, pred2, pred3, pred4
         pred1 = self.forward_level_1(enc1, enc2, enc3, enc4)[0]
         return pred1
 
 
 class MultiScalePixelShuffleUnet(MultiScaleUnet):
-    def __init__(self, unet_block_module=BasicBlock, in_channels=3, out_channels=1, init_features=config.init_features):
-        super(MultiScalePixelShuffleUnet, self).__init__(unet_block_module, in_channels, out_channels, init_features)
+    def __init__(self, unet_block_module=BasicBlock,
+                 in_channels=3, out_channels=1,
+                 init_features=config.init_features):
+        super(MultiScalePixelShuffleUnet, self).__init__(unet_block_module,
+                                                         in_channels, out_channels,
+                                                         init_features)
         features = init_features
         self.encoder1 = unet_block_module(in_channels, features)
         self.encoder2 = unet_block_module(features, features * 2)
