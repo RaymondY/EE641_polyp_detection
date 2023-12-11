@@ -35,6 +35,8 @@ pip install opencv-python
 1. Set up the environment as described above.
 2. Download the dataset from [Kvasir-SEG](https://datasets.simula.no/downloads/kvasir-seg.zip), then unzip it to the "datasets" folder.
 3. Run the following command to preprocess the dataset:`python preprocess.py` if this is the first time to run the code.
+4. Run the following command to train the model: `python main.py`. Comment the lines in run() function under _"test example"_ in main.py to evaluate the saved model.
+
 
 ## Files
 * `preprocess.py`: preprocess the dataset (resize)
